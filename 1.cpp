@@ -1,73 +1,77 @@
 #include <iostream>
-#include <cstring>
-#include <algorithm>
-#include <string>
+#include <cmath>
 #include <vector>
-#include <queue>
+#include <algorithm>
+
 using namespace std;
 
-int main(int argc, char* argv[])
-{
-	int n;
-	int s1, s2, e1, e2;
-	int start = 300;
-	int end = 301;
-	int result = 0;
-	int maxEnd = 0;
-	int maxIndex = 0;
-	vector<pair<int, int> > v;
+int n;
+vector<pair<int, int>> arr;
+vector<int> tree;
 
-	cin >> n;
+// node가 담고 있는 구간: [left, right]
+// 내가 변경하고자 하고 싶은 구간: [start, end]
+void updateTree(int node, int left, int right, int index, int diff) {
+    if (index < left || right < index) return;
 
-	for (int i = 0; i < n; ++i) {
-		cin >> s1 >> s2 >> e1 >> e2;
+    tree[node] += diff;
 
-		if (s1 * 100 + s2 < 301) {
-			s1 = 3;
-			s2 = 1;
-		}
+    if (left != right) {
+        int mid = (left + right) / 2;
+        updateTree(node * 2, left, mid, index, diff);
+        updateTree(node * 2 + 1, mid + 1, right, index, diff);
+    }
+}
 
-		if (e1 * 100 + e2 > 1130) {
-			e1 = 12;
-			e2 = 01;
-		}
+// 내 앞에 나보다 큰 사람들이 몇명이나 있나?
+int queryTree(int node, int left, int right, int start, int end) {
+    if (end < left || right < start) return 0;
+    if (start <= left && right <= end) return tree[node];
+    int mid = (left + right) / 2;
+    return queryTree(node * 2, left, mid, start, end) + queryTree(node * 2 + 1, mid + 1, right, start, end);
+}
 
-		v.push_back({ s1 * 100 + s2, e1 * 100 + e2 });
-	}
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
 
-	sort(v.begin(), v.end());
+    cin >> n;
+    arr.resize(n);
 
-	for (int i = 0; i < n; ++i) {
-		if (v[i].first > start && v[i].first <= end) {
-			if (maxEnd < v[i].second) {
-				maxEnd = v[i].second;
-				maxIndex = i;
-			}
-			if (v[i].second == 1201) {
-				++result;
-				end = maxEnd;
-				break;
-			}
-			continue;
-		}
-		else {
-			if (end >= maxEnd) {
-				break;
-			}
+    // first: 선수들의 기본 index
+    // second: 선수들의 실력 정보
+    for (int i = 0; i < n; ++i) {
+        arr[i].first = i;
+        cin >> arr[i].second;
+    }
 
-			++result;
-			start = end;
-			end = maxEnd;
-			--i;
-		}
-	}
+    // 모든 선수들의 실력을 낮은 순서대로 정렬
+    sort(arr.begin(), arr.end(), [](const auto &a, const auto &b) {
+        return a.second < b.second;
+    });
 
-	if (end == 1201) {
-		cout << result << endl;
-	}
-	else {
-		cout << 0 << endl;
-	}
+    // Renumbering
+    for (int i = 0; i < n; ++i)
+        arr[i].second = i;
 
-	return 0;
+    int treeHeight = ceil(log2(n));
+    int treeSize = 1 << (treeHeight + 1);
+    tree.resize(treeSize, 0);
+
+    vector<pair<int, int>> result(n);
+
+    // 능력치가 큰 사람부터 삽입합니다.
+    for (int i = n - 1; i >= 0; --i) {
+        result[i].first = arr[i].first;
+        result[i].second = queryTree(1, 0, n - 1, 0, arr[i].first - 1) + 1;
+        updateTree(1, 0, n - 1, arr[i].first, 1);
+    }
+
+    sort(result.begin(), result.end());
+    for (auto e : result) {
+        cout << e.second << "\n";
+    }
+
+    return 0;
 }
