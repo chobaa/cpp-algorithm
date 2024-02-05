@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int map[501][501];
+int map[502][502];
 
 int n, m;
 
@@ -35,7 +35,7 @@ int main()
             map[i][j] = 987654321;
         }
     }
-    for (int i = 1; i <= m; i++)
+    for (int i = 0; i < m; i++)
     {
         int a, b;
         cin >> a >> b;
@@ -50,9 +50,9 @@ int main()
         {
             if (map[i][j] != 987654321 || map[j][i] != 987654321)
                 cnt++;
-            if (cnt == n - 1)
-                answer++;
         }
+        if (cnt == n - 1)
+            answer++;
     }
     cout << answer;
 }
