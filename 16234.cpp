@@ -13,6 +13,30 @@ bool check[51][51];
 int dy[4] = {0, 1, 0, -1};
 int dx[4] = {1, 0, -1, 0};
 
+void bfs(int y, int x)
+{
+    queue<pair<int, int>> bq;
+    int cs = 0;
+    bq.push({y, x});
+    check[y][x] = false;
+    while (!bq.empty())
+    {
+        int cy = bq.front().first;
+        int cx = bq.front().second;
+        for (int i = 0; i < 4; i++)
+        {
+            int ny = cy + dy[i];
+            int nx = cx + dx[i];
+            if (ny < 0 || ny >= n || nx < 0 || nx >= n)
+                continue;
+            if (check[ny][nx])
+            {
+                q.push
+            }
+        }
+    }
+}
+
 int main()
 {
     cin >> n >> l >> r;
@@ -45,14 +69,12 @@ int main()
                             if (!check[i][j])
                             {
                                 check[i][j] = true;
-                                q.push({i, j});
-                                sum += population[i][j];
+                                sum++;
                             }
                             if (!check[ny][nx])
                             {
                                 check[ny][nx] = true;
-                                q.push({ny, nx});
-                                sum += population[ny][nx];
+                                sum++;
                             }
                         }
                     }
@@ -61,13 +83,12 @@ int main()
         }
         if (q.size() == 0)
             break;
-        int temp = sum / q.size();
         while (!q.empty())
         {
             int cy = q.front().first;
             int cx = q.front().second;
-            population[cy][cx] = temp;
-            check[cy][cx] = false;
+            if (check[cy][cx])
+                bfs(cy, cx);
             q.pop();
         }
         for (int i = 0; i < n; i++)

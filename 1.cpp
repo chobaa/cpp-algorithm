@@ -1,73 +1,97 @@
 #include <iostream>
-#include <cstdio>
-#include <algorithm>
-#include <cmath>
 #include <vector>
+#include <algorithm>
+#include <string>
+#include <sstream>
+#include <cmath>
+#include <queue>
 
 using namespace std;
 
-void update(vector<int> &tree, int node, int start, int end, int index, int diff)
-{
-    if (!(start <= index && index <= end))
-        return;
+int map[101][101] = { 0, };
 
-    tree[node] += diff;
-
-    if (start != end)
-    {
-        int mid = (start + end) / 2;
-
-        update(tree, node * 2, start, mid, index, diff);
-        update(tree, node * 2 + 1, mid + 1, end, index, diff);
-    }
-}
-
-int query(vector<int> &tree, int node, int start, int end, int val)
-{
-    int get;
-    int mid = (start + end) / 2;
-
-    if (start == end)
-    {
-        tree[node]--;
-        return start;
-    }
-
-    if (tree[node * 2] >= val)
-        get = query(tree, node * 2, start, mid, val);
-    else
-        get = query(tree, node * 2 + 1, mid + 1, end, val - tree[node * 2]);
-
-    tree[node]--;
-    return get;
-}
 int main()
 {
-    int n;
-    scanf("%d", &n);
+	queue<pair<int, int>> qSnake;
+	queue<pair<int, char>> qDir;
 
-    vector<int> arr(n + 1);
+	int N, K;
+	cin >> N;
+	cin >> K;
 
-    int h = (int)ceil(log2(n));
-    int tree_size = 1 << (h + 1);
+	for (int i = 0; i < K; i++)
+	{
+		int input_x, input_y;
+		cin >> input_x >> input_y;
+		map[input_x][input_y] = 1;
+	}
 
-    vector<int> tree(tree_size);
+	int L;
+	cin >> L;
 
-    for (int i = 0; i < n; i++)
-    {
-        scanf("%d", &arr[i]);
-        update(tree, 1, 0, n - 1, i, 1);
-    }
+	for (int i = 0; i < L; i++)
+	{
+		int time;
+		char dir;
 
-    vector<int> ans(n + 1);
-    for (int i = n - 1; i >= 0; i--)
-    {
-        int get = query(tree, 1, 0, n - 1, arr[i] + 1);
+		cin >> time >> dir;
 
-        ans[get + 1] = i + 1;
-    }
+		qDir.push(make_pair(time, dir));
+	}
 
-    for (int i = n; i >= 1; i--)
-        printf("%d ", ans[i]);
-    return 0;
+	int x = 1;
+	int y = 2;
+	int nCurDir = 1; //0: 아래 1: 오른쪽 2: 위 3: 왼쪽
+	int cnt = 1;
+
+	int dirX[4] = { 1, 0, -1, 0 };
+	int dirY[4] = { 0, 1, 0, -1 };
+
+	qSnake.push(make_pair(1, 1));	//초기 뱀 모양
+	map[1][1] = 2;
+
+	while (1)
+	{
+		if (x > N || y > N || x < 1 || y < 1)
+			break;
+
+		if (map[x][y] == 2)
+			break;
+
+		if (!qDir.empty())
+		{
+			if (cnt == qDir.front().first)
+			{
+				if (qDir.front().second == 'L') //왼쪽으로 회전
+					nCurDir = (nCurDir + 1) % 4;
+				else if (qDir.front().second == 'D') //오른쪽으로 회전
+					nCurDir = (nCurDir + 3) % 4;
+
+				qDir.pop();
+			}
+		}
+
+		if (map[x][y] == 0)
+		{
+			qSnake.push(make_pair(x, y));
+			map[qSnake.front().first][qSnake.front().second] = 0;
+			qSnake.pop();
+		}
+
+		else if (map[x][y] == 1)
+		{
+			qSnake.push(make_pair(x, y));
+		}
+
+		map[x][y] = 2;
+
+		x = x + dirX[nCurDir];
+		y = y + dirY[nCurDir];
+
+		cnt++;
+	}
+	
+	cout << cnt;
+
+	return 0;
 }
