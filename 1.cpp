@@ -1,119 +1,80 @@
 #include <iostream>
+#include <algorithm>
 #include <vector>
-#include <cstdio>
-#include <string.h>
+#define MAX 30001
+#define MAX_K 15
 using namespace std;
 
-int node_num;
-const int TREE_HIGHT = 20;
-const int MAX_NUM = 100000;
-int depth[MAX_NUM];
-int parent[MAX_NUM + 1][TREE_HIGHT];
-int min_road[MAX_NUM + 1][TREE_HIGHT];
-int max_road[MAX_NUM + 1][TREE_HIGHT];
-vector<pair<int, int>> adj[MAX_NUM + 1];
+int N, M, a, b, pre = 1, now, ans = 0;
+bool visit[MAX];
+int dp[MAX][MAX_K];
+vector<int> tree[MAX];
+int depth[MAX], dist[MAX];
 
-void FindParent(int par, int now, int dep, int road_len)
+void dfs(int n, int d)
 {
-
-	depth[now] = dep;
-	parent[now][0] = par;
-	min_road[now][0] = max_road[now][0] = road_len;
-
-	for (int i = 0; i < adj[now].size(); ++i)
+	depth[n] = d;	 // depth 저장
+	visit[n] = true; // 방문
+	for (int i = 0; i < tree[n].size(); i++)
 	{
-		if (adj[now][i].first != par)
-			FindParent(now, adj[now][i].first, dep + 1, adj[now][i].second);
+		int next = tree[n][i]; // 다음 방문할 node
+		if (visit[next])
+			continue;	  // 이미 방문한 경우
+		dp[next][0] = n;  // 부모 정보 저장
+		dfs(next, d + 1); // dfs 탐색
 	}
-	return;
 }
 
-pair<int, int> FindMinMaxRoad(int a, int b)
+void init()
+{ // 2^k번째 조상까지 정보 저장
+	for (int k = 1; k < MAX_K; k++)
+	{
+		for (int i = 1; i <= N; i++)
+			dp[i][k] = dp[dp[i][k - 1]][k - 1];
+	}
+}
+
+int lca(int x, int y)
 {
-	int min_result = 1000001, max_result = 0;
-
-	if (depth[a] != depth[b])
-	{
-		if (depth[a] < depth[b]) // 깊이가 다르다면 a가 항상 더 깊게
-			swap(a, b);
-
-		int dif = depth[a] - depth[b];
-
-		for (int i = 0; dif > 0; ++i)
+	if (depth[y] < depth[x])
+		swap(y, x); // y가 더 깊음을 보장
+	for (int k = MAX_K - 1; k >= 0; k--)
+	{ // x, y의 depth를 맞춤
+		if (depth[y] - depth[x] >= 1 << k)
+			y = dp[y][k];
+	}
+	if (x == y)
+		return x; // x가 LCA(최소 공통 조상)인 경우
+	for (int k = MAX_K - 1; k >= 0; k--)
+	{ // LCA를 찾음
+		if (dp[x][k] != dp[y][k])
 		{
-			if (dif % 2 == 1)
-			{
-				min_result = min(min_result, min_road[a][i]);
-				max_result = max(max_result, max_road[a][i]);
-				a = parent[a][i];
-			}
-			dif = dif >> 1;
+			x = dp[x][k];
+			y = dp[y][k];
 		}
 	}
-
-	if (a != b)
-	{
-		for (int k = TREE_HIGHT - 1; k >= 0; --k)
-		{
-			if (parent[a][k] != 0 && parent[a][k] != parent[b][k])
-			{
-				min_result = min(min_result, min_road[a][k]);
-				min_result = min(min_result, min_road[b][k]);
-
-				max_result = max(max_result, max_road[a][k]);
-				max_result = max(max_result, max_road[b][k]);
-				a = parent[a][k];
-				b = parent[b][k];
-			}
-		}
-
-		min_result = min(min_result, min_road[a][0]);
-		min_result = min(min_result, min_road[b][0]);
-
-		max_result = max(max_result, max_road[a][0]);
-		max_result = max(max_result, max_road[b][0]);
-	}
-
-	return make_pair(min_result, max_result);
+	return dp[x][0];
 }
 
 int main()
 {
-	scanf("%d", &node_num);
-
-	int a, b, road;
-	for (int i = 0; i < node_num - 1; ++i)
-	{
-		scanf("%d %d %d", &a, &b, &road);
-		adj[a].push_back(make_pair(b, road));
-		adj[b].push_back(make_pair(a, road));
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+	cin >> N;
+	for (int i = 1; i < N; i++)
+	{ // tree를 만듦
+		cin >> a >> b;
+		tree[a].push_back(b);
+		tree[b].push_back(a);
 	}
-
-	memset(parent, 0, sizeof(parent));
-	memset(min_road, 1000001, sizeof(min_road));
-	memset(max_road, 0, sizeof(max_road));
-
-	FindParent(0, 1, 0, 0);
-
-	for (int k = 1; k < TREE_HIGHT; ++k)
-		for (int idx = 2; idx <= node_num; ++idx)
-			if (parent[idx][k - 1] != 0)
-			{
-				parent[idx][k] = parent[parent[idx][k - 1]][k - 1];
-				min_road[idx][k] = min(min_road[parent[idx][k - 1]][k - 1], min_road[idx][k - 1]);
-				max_road[idx][k] = max(max_road[parent[idx][k - 1]][k - 1], max_road[idx][k - 1]);
-			}
-
-	int pair_num;
-	pair<int, int> result;
-	scanf("%d", &pair_num);
-
-	while (pair_num--)
-	{
-		scanf("%d %d", &a, &b);
-		result = FindMinMaxRoad(a, b);
-		printf("%d %d\n", result.first, result.second);
+	dfs(1, 0); // depth, 부모노드 정보 저장
+	init();	   // 2^k번째 조상까지의 정보 저장
+	cin >> M;
+	for (int i = 0; i < M; i++)
+	{ // 한동이가 방문해야 할 모든 도시를 방문 할 수 있는 최소 시간을 구함
+		cin >> now;
+		ans += (depth[pre] + depth[now] - 2 * depth[lca(now, pre)]);
+		pre = now;
 	}
-
-	return 0;
+	cout << ans;
 }
