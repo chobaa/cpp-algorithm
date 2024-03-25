@@ -4,24 +4,23 @@
 
 using namespace std;
 
-vector<int> arr;
-vector<int> dp;
+int arr[10001];
+int dp[10001];
 
 int main()
 {
     int n;
     cin >> n;
-    arr.resize(n);
-    dp.resize(n);
-    for (int i = 0; i < n; i++)
+    for (int i = 1; i <= n; i++)
     {
         cin >> arr[i];
     }
-    dp[0] = arr[0];
+    dp[0] = 0;
     dp[1] = arr[1];
-    for (int i = 2; i < n; i++)
+    dp[2] = arr[1] + arr[2];
+    for (int i = 3; i <= n; i++)
     {
-        dp[i] = max({dp[i - 2] + dp[i], dp[i - 1] + dp[i], dp[i - 2] + dp[i - 1]});
+        dp[i] = max(dp[i - 3] + arr[i - 1] + arr[i], max(dp[i - 2] + arr[i], dp[i - 1]));
     }
-    cout << dp[n - 1];
+    cout << dp[n];
 }
