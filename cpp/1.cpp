@@ -1,48 +1,88 @@
 #include <iostream>
+#include <vector>
+#include <queue>
 #include <algorithm>
-
-using namespace std;
-int n,ts,m;
-int ans;
-typedef pair<pair<int, int>, int> p;
-
-bool cmp(p a, p b) {
-    return a.first.second < b.first.second;
+ 
+const int INF = 123456789;
+ 
+void set_graph(std::vector<std::vector<int>>& graph, const int u, const int v, const int c)
+{
+    graph[u][v] = c;
+    //graph[v][u] = -c;
 }
-
-int main() {
-    cin >> n >> ts >> m;
-    vector<p> arr;
-    vector<int> truck(n);
-
-    for(int i=0 ; i<m ; i++) {
-        int a,b,c;
-        cin >> a >> b >> c;
-        arr.push_back(p(make_pair(a, b), c));
-    }
-    sort(arr.begin(), arr.end(), cmp);
-    
-    int size = arr.size();
-    for(int i=0 ; i<size ; i++) {
-        int start = arr[i].first.first-1;
-        int end = arr[i].first.second-1;
-        int box = arr[i].second;
-        int temp=0;
-        int cnt=0;
-
-        for(int j=start ; j<end ; j++) {
-            temp = max(temp, truck[j]); // 해당하는 마을에서 쌓인 박스 수 중 가장 큰 수
+ 
+int dfs(const int cur, const int capacity, const int sink, const int n, std::vector<std::vector<int>>& graph, std::vector<bool>& visited)
+{
+    if (visited[cur])
+        return 0;
+    visited[cur] = true;
+    if (cur == sink)
+        return capacity;
+ 
+    for (int v = 0; v < n; v++) {
+        if (graph[cur][v] > 0) {
+            int cur_capacity = graph[cur][v];
+            if (capacity != 0 && cur_capacity > capacity) {
+                cur_capacity = capacity;
+            }
+            int f = dfs(v, cur_capacity, sink, n, graph, visited);
+            if (f) {
+                graph[cur][v] -= f;
+                graph[v][cur] += f;
+                return f;
+            }
         }
-        if(temp+box<=ts) cnt = box; // 가장 큰 수에 박스를 넣어도 용량을 안넘으면
-        else cnt = ts-temp; // 용량을 넘으면
-
-        for(int j=start ; j<end ; j++) {
-            truck[j] += cnt;
-        }
-        ans += cnt;
     }
-
-    cout << ans << "\n";
-
+ 
     return 0;
+}
+ 
+int ford_fulkerson(const int source, const int sink, const int n, std::vector<std::vector<int>>& graph)
+{
+    std::vector<bool> visited(n, false);
+ 
+    int max_flow{}, cur_flow{};
+    while (1) {
+        fill(visited.begin(), visited.end(), false);
+        cur_flow = dfs(source, 0, sink, n, graph, visited);
+        if (cur_flow == 0)
+            break;
+        max_flow += cur_flow;
+    }
+ 
+    return max_flow;
+}
+ 
+int main(int argc, char* argv[])
+{
+    std::vector<std::vector<int>> graph;
+    // set graph
+    int n{}, m{};
+    scanf("%d %d", &n, &m);
+    int total{}, e{};
+    total = n + m;
+    graph.resize(total +2, std::vector<int>(total +2, 0));
+ 
+    // add edges outgoing from source(0)
+    for (int i = 1; i <= n; i++) {
+        set_graph(graph, 0, i, 1);
+    }
+    // add edges incoming to sink(n+m+1 = total+1)
+    for (int i = n + 1; i <= total; i++) {
+        set_graph(graph, i, total + 1, 1);
+    }
+ 
+    int s, v;
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &s);
+        for (int j = 0; j < s; j++) {
+            scanf("%d", &v);
+            set_graph(graph, i + 1, n + v, 1);
+        }
+    }
+    
+    // source: 0, sink: n+1
+    // start
+    auto result = ford_fulkerson(0, total +1, total +2, graph);
+    std::cout << result << "\n";
 }
