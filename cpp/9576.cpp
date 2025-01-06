@@ -53,6 +53,6 @@ int main()
             if (dfs(i))
                 answer++;
         }
-        cout << answer;
+        cout << answer << "\n";
     }
 }
