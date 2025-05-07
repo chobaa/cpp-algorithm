@@ -2,8 +2,8 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: gcc.exe 활성 파일 빌드",
-            "command": "C:\\TDM-GCC-64\\bin\\gcc.exe",
+            "label": "C/C++: g++.exe 활성 파일 빌드",
+            "command": "C:\\TDM-GCC-64\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
